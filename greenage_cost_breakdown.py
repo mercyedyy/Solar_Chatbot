@@ -35,32 +35,23 @@ def calculate_breakdown(solar_kwp, inverter_kva, battery_kwh, category):
     }
 
 # Streamlit UI
-st.title("🔋 Greenage Solar Quote Comparison")
+st.title("🔋 Greenage Solar Cost Estimator")
 
 solar_kwp = st.number_input("Enter solar panel capacity (kWp)", value=2.0)
 inverter_kva = st.number_input("Enter inverter capacity (kVA)", value=2.0)
 battery_kwh = st.number_input("Enter battery capacity (kWh)", value=5.0)
-compare_option = st.selectbox("Choose comparison type", ["Midrange", "High-end", "Both"])
 
 if st.button("Generate Estimate"):
-    if compare_option == "Both":
-        midrange_data = calculate_breakdown(solar_kwp, inverter_kva, battery_kwh, "Midrange")
-        highend_data = calculate_breakdown(solar_kwp, inverter_kva, battery_kwh, "High-end")
+    midrange_data = calculate_breakdown(solar_kwp, inverter_kva, battery_kwh, "Midrange")
+    highend_data = calculate_breakdown(solar_kwp, inverter_kva, battery_kwh, "High-end")
 
-        df = pd.DataFrame({
-            "Item": list(midrange_data.keys()),
-            "Midrange (₦)": list(midrange_data.values()),
-            "High-end (₦)": list(highend_data.values())
-        })
-        st.table(df)
+    df = pd.DataFrame({
+        "Item": list(midrange_data.keys()),
+        "Midrange (₦)": list(midrange_data.values()),
+        "High-end (₦)": list(highend_data.values())
+    })
+    st.table(df)
 
-    else:
-        result = calculate_breakdown(solar_kwp, inverter_kva, battery_kwh, compare_option)
-        df = pd.DataFrame({
-            "Item": list(result.keys()),
-            f"{compare_option} (₦)": list(result.values())
-        })
-        st.table(df)
 
 
 
