@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-# Base buying costs (before markup)
+# Base buying costs before markup
 buying_costs = {
     "Midrange": {
         "solar": 230000,
@@ -15,7 +15,7 @@ buying_costs = {
     }
 }
 
-# Markup and other percentages
+# Markup and cost percentages
 markup_percent = 0.3
 accessories_percent = 0.15
 installation_percent = 0.13
@@ -27,7 +27,7 @@ def calculate_breakdown(solar_kwp, inverter_kva, battery_kwh, category):
 
     rates = buying_costs[category]
     
-    # Marked-up equipment costs
+    # Equipment costs after markup
     solar_cost = solar_kwp * rates["solar"] * (1 + markup_percent)
     inverter_cost = inverter_kva * rates["inverter"] * (1 + markup_percent)
     battery_cost = battery_kwh * rates["battery"] * (1 + markup_percent)
@@ -38,7 +38,7 @@ def calculate_breakdown(solar_kwp, inverter_kva, battery_kwh, category):
     discount = equipment_total * discount_percent
     total_project_cost = equipment_total + accessories_cost + installation_cost - discount
 
-    # Build dataframe
+    # Prepare data for display
     data = {
         "Item": ["Solar", "Inverter", "Battery", "Accessories", "Installation", "Discount", "Total"],
         "Amount (₦)": [
@@ -47,7 +47,7 @@ def calculate_breakdown(solar_kwp, inverter_kva, battery_kwh, category):
             round(battery_cost),
             round(accessories_cost),
             round(installation_cost),
-            -round(discount),  # discount as negative
+            -round(discount),
             round(total_project_cost)
         ]
     }
@@ -57,16 +57,18 @@ def calculate_breakdown(solar_kwp, inverter_kva, battery_kwh, category):
 
 # --- Streamlit UI ---
 st.title("🔆 Greenage Solar System Estimator")
-st.write("Enter your system specs to view detailed Midrange and High-end cost estimates:")
+st.write("Select your system type and enter specifications to get a detailed price estimate.")
 
+# User inputs
+category = st.selectbox("Select system type", ["Midrange", "High-end"])
 solar_kwp = st.number_input("☀️ Solar panel capacity (kWp)", min_value=0.0, value=2.0)
 inverter_kva = st.number_input("⚡ Inverter capacity (kVA)", min_value=0.0, value=2.0)
 battery_kwh = st.number_input("🔋 Battery capacity (kWh)", min_value=0.0, value=5.0)
 
-if st.button("📊 Show Price Estimate"):
-    for category in ["Midrange", "High-end"]:
-        st.subheader(f"{category} System Estimate")
-        breakdown_df = calculate_breakdown(solar_kwp, inverter_kva, battery_kwh, category)
-        st.table(breakdown_df)
+# Calculate and display
+if st.button("📊 Calculate Cost"):
+    breakdown_df = calculate_breakdown(solar_kwp, inverter_kva, battery_kwh, category)
+    st.subheader(f"{category} System Estimate")
+    st.table(breakdown_df)
 
 
