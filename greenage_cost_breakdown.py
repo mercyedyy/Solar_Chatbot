@@ -1,74 +1,66 @@
 import streamlit as st
 import pandas as pd
 
-# Base buying costs before markup
-buying_costs = {
-    "Midrange": {
-        "solar": 230000,
-        "inverter": 110000,
-        "battery": 240000
-    },
-    "High-end": {
-        "solar": 230000,
-        "inverter": 220000,
-        "battery": 265000
-    }
-}
-
-# Markup and cost percentages
-markup_percent = 0.3
-accessories_percent = 0.15
-installation_percent = 0.13
-discount_percent = 0.02
-
 def calculate_breakdown(solar_kwp, inverter_kva, battery_kwh, category):
-    if category not in buying_costs:
-        return "Invalid category."
+    if category == "Midrange":
+        rates = {"solar": 230000, "inverter": 110000, "battery": 240000}
+    elif category == "High-end":
+        rates = {"solar": 230000, "inverter": 220000, "battery": 265000}
+    else:
+        return None
 
-    rates = buying_costs[category]
-    
-    # Equipment costs after markup
-    solar_cost = solar_kwp * rates["solar"] * (1 + markup_percent)
-    inverter_cost = inverter_kva * rates["inverter"] * (1 + markup_percent)
-    battery_cost = battery_kwh * rates["battery"] * (1 + markup_percent)
+    markup = 1.3
+    accessories_percent = 0.15
+    installation_percent = 0.13
+    discount_percent = 0.02
+
+    solar_cost = solar_kwp * rates["solar"] * markup
+    inverter_cost = inverter_kva * rates["inverter"] * markup
+    battery_cost = battery_kwh * rates["battery"] * markup
 
     equipment_total = solar_cost + inverter_cost + battery_cost
     accessories_cost = equipment_total * accessories_percent
     installation_cost = equipment_total * installation_percent
     discount = equipment_total * discount_percent
-    total_project_cost = equipment_total + accessories_cost + installation_cost - discount
+    total_cost = equipment_total + accessories_cost + installation_cost - discount
 
-    # Prepare data for display
-    data = {
-        "Item": ["Solar", "Inverter", "Battery", "Accessories", "Installation", "Discount", "Total"],
-        "Amount (₦)": [
-            round(solar_cost),
-            round(inverter_cost),
-            round(battery_cost),
-            round(accessories_cost),
-            round(installation_cost),
-            -round(discount),
-            round(total_project_cost)
-        ]
+    return {
+        "Solar": round(solar_cost),
+        "Inverter": round(inverter_cost),
+        "Battery": round(battery_cost),
+        "Accessories": round(accessories_cost),
+        "Installation": round(installation_cost),
+        "Discount": -round(discount),
+        "Total": round(total_cost)
     }
 
-    df = pd.DataFrame(data)
-    return df
+# Streamlit UI
+st.title("🔋 Greenage Solar Quote Comparison")
 
-# --- Streamlit UI ---
-st.title("🔆 Greenage Solar System Estimator")
-st.write("Select your system type and enter specifications to get a detailed price estimate.")
+solar_kwp = st.number_input("Enter solar panel capacity (kWp)", value=2.0)
+inverter_kva = st.number_input("Enter inverter capacity (kVA)", value=2.0)
+battery_kwh = st.number_input("Enter battery capacity (kWh)", value=5.0)
+compare_option = st.selectbox("Choose comparison type", ["Midrange", "High-end", "Both"])
 
-# User inputs
-category = st.selectbox("Select system type", ["Midrange", "High-end"])
-solar_kwp = st.number_input("☀️ Solar panel capacity (kWp)", min_value=0.0, value=2.0)
-inverter_kva = st.number_input("⚡ Inverter capacity (kVA)", min_value=0.0, value=2.0)
-battery_kwh = st.number_input("🔋 Battery capacity (kWh)", min_value=0.0, value=5.0)
+if st.button("Generate Estimate"):
+    if compare_option == "Both":
+        midrange_data = calculate_breakdown(solar_kwp, inverter_kva, battery_kwh, "Midrange")
+        highend_data = calculate_breakdown(solar_kwp, inverter_kva, battery_kwh, "High-end")
 
-# Calculate and display
-if st.button("📊 Calculate Cost"):
-    breakdown_df = calculate_breakdown(solar_kwp, inverter_kva, battery_kwh, category)
-    st.subheader(f"{category} System Estimate")
-    st.table(breakdown_df)
+        df = pd.DataFrame({
+            "Item": list(midrange_data.keys()),
+            "Midrange (₦)": list(midrange_data.values()),
+            "High-end (₦)": list(highend_data.values())
+        })
+        st.table(df)
+
+    else:
+        result = calculate_breakdown(solar_kwp, inverter_kva, battery_kwh, compare_option)
+        df = pd.DataFrame({
+            "Item": list(result.keys()),
+            f"{compare_option} (₦)": list(result.values())
+        })
+        st.table(df)
+
 
 
